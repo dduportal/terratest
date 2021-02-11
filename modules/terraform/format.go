@@ -87,6 +87,16 @@ func FormatTerraformLockAsArgs(lockCheck bool, lockTimeout string) []string {
 	return lockArgs
 }
 
+// FormatTerraformPluginDirAsArgs formats the plugin-dir variable
+// -plugin-dir
+func FormatTerraformPluginDirAsArgs(pluginDir string) []string {
+	pluginArgs := []string{fmt.Sprintf("-plugin-dir=%v", pluginDir)}
+	if pluginDir == "" {
+		return nil
+	}
+	return pluginArgs
+}
+
 // FormatTerraformArgs will format multiple args with the arg name (e.g. "-var-file", []string{"foo.tfvars", "bar.tfvars"})
 // returns "-var-file foo.tfvars -var-file bar.tfvars"
 func FormatTerraformArgs(argName string, args []string) []string {
