@@ -43,18 +43,17 @@ func TestInitPluginDir(t *testing.T) {
 
 	pluginDir, err := ioutil.TempDir("", t.Name())
 	require.NoError(t, err)
+	defer os.RemoveAll(pluginDir)
 
 	terraformFixture := "../../test/fixtures/terraform-basic-configuration"
 
 	initializePluginsFolder, err := files.CopyTerraformFolderToTemp(terraformFixture, t.Name())
 	require.NoError(t, err)
+	defer os.RemoveAll(initializePluginsFolder)
 
 	testFolder, err := files.CopyTerraformFolderToTemp(terraformFixture, t.Name())
 	require.NoError(t, err)
-
-	defer os.RemoveAll(initializePluginsFolder)
 	defer os.RemoveAll(testFolder)
-	defer os.RemoveAll(pluginDir)
 
 	terraformOptions := &Options{
 		TerraformDir: initializePluginsFolder,
