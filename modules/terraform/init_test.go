@@ -2,6 +2,7 @@ package terraform
 
 import (
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -51,19 +52,26 @@ func TestInitPluginDir(t *testing.T) {
 	testFolder, err := files.CopyTerraformFolderToTemp(terraformFixture, t.Name())
 	require.NoError(t, err)
 
+	defer os.RemoveAll(initializePluginsFolder)
+	defer os.RemoveAll(testFolder)
+	defer os.RemoveAll(pluginDir)
+
 	terraformOptions := &Options{
 		TerraformDir: initializePluginsFolder,
 	}
-
-	Init(t, terraformOptions)
-
-	initializedPluginDir := initializePluginsFolder + "/.terraform/plugins"
-	files.CopyFolderContents(initializedPluginDir, pluginDir)
 
 	terraformOptionsPluginDir := &Options{
 		TerraformDir: testFolder,
 		PluginDir:    pluginDir,
 	}
+
+	Init(t, terraformOptions)
+
+	_, err = InitE(t, terraformOptionsPluginDir)
+	require.Error(t, err)
+
+	initializedPluginDir := initializePluginsFolder + "/.terraform/plugins"
+	files.CopyFolderContents(initializedPluginDir, pluginDir)
 
 	initOutput := Init(t, terraformOptionsPluginDir)
 
