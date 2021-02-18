@@ -7,6 +7,7 @@ import (
 
 	"github.com/gruntwork-io/terratest/modules/files"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestInitBackendConfig(t *testing.T) {
@@ -34,4 +35,37 @@ func TestInitBackendConfig(t *testing.T) {
 	InitAndApply(t, options)
 
 	assert.FileExists(t, remoteStateFile)
+}
+
+func TestInitPluginDir(t *testing.T) {
+	t.Parallel()
+
+	pluginDir, err := ioutil.TempDir("", t.Name())
+	require.NoError(t, err)
+
+	terraformFixture := "../../test/fixtures/terraform-basic-configuration"
+
+	initializePluginsFolder, err := files.CopyTerraformFolderToTemp(terraformFixture, t.Name())
+	require.NoError(t, err)
+
+	testFolder, err := files.CopyTerraformFolderToTemp(terraformFixture, t.Name())
+	require.NoError(t, err)
+
+	terraformOptions := &Options{
+		TerraformDir: initializePluginsFolder,
+	}
+
+	Init(t, terraformOptions)
+
+	initializedPluginDir := initializePluginsFolder + "/.terraform/plugins"
+	files.CopyFolderContents(initializedPluginDir, pluginDir)
+
+	terraformOptionsPluginDir := &Options{
+		TerraformDir: testFolder,
+		PluginDir:    pluginDir,
+	}
+
+	initOutput := Init(t, terraformOptionsPluginDir)
+
+	assert.Contains(t, initOutput, "(unauthenticated)")
 }
