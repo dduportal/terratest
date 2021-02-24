@@ -60,3 +60,49 @@ func nameMatchesWorkspace(name string, workspace string) bool {
 	match, _ := regexp.MatchString(fmt.Sprintf("^\\*?\\s*%s$", name), workspace)
 	return match
 }
+
+// WorkspaceDelete removes the specified terraform workspace with the given options.
+// It returns the name of the current workspace AFTER deletion, and the returned error (that can be nil).
+// If the workspace to delete is the current one, then it tries to switch to the "default" workspace.
+// Deleting the workspace "default" is not supported.
+func WorkspaceDeleteE(t testing.TestingT, options *Options, name string) (string, error) {
+	currentWorkspace := RunTerraformCommand(t, options, "workspace", "show")
+
+	if name == "default" {
+		return currentWorkspace, fmt.Errorf("Deleting the workspace 'default' is not supported")
+	}
+
+	out, err := RunTerraformCommandE(t, options, "workspace", "list")
+	if err != nil {
+		return currentWorkspace, err
+	}
+	if !isExistingWorkspace(out, name) {
+		return currentWorkspace, fmt.Errorf("The workspace %q does not exist.", name)
+	}
+
+	// Switch workspace before deleting if it is the current
+	if currentWorkspace == name {
+		currentWorkspace = WorkspaceSelectOrNew(t, options, "default")
+	}
+
+	// delete workspace
+	_, err = RunTerraformCommandE(t, options, "workspace", "delete", name)
+
+	return currentWorkspace, err
+}
+
+// WorkspaceDelete removes the specified terraform workspace with the given options.
+// It returns the name of the current workspace AFTER deletion.
+// If the workspace to delete is the current one, then it tries to switch to the "default" workspace.
+// Deleting the workspace "default" is not supported and only return an empty string (to avoid a fatal error).
+func WorkspaceDelete(t testing.TestingT, options *Options, name string) string {
+	if name == "default" {
+		return name
+	}
+
+	out, err := WorkspaceDeleteE(t, options, name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return out
+}
