@@ -101,8 +101,6 @@ func WorkspaceDelete(t testing.TestingT, options *Options, name string) string {
 	}
 
 	out, err := WorkspaceDeleteE(t, options, name)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	return out
 }
